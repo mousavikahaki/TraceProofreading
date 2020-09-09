@@ -1,0 +1,21 @@
+clear all
+clc
+close all
+num = 1;
+O = load(['E:\Traces\L1\',num2str(num),'_L6_AS.mat']);
+F = load(['E:\Traces\enhancedIM\L1\output',num2str(num),'_1881000_.mat']);% Enhanced image, now using original image
+%load(['E:\Shih-Luen\Lab\Projects\Tracing\code\ImageEnhancement\singleIM_Cluster\data\training_result\3DUNet_L1_singleIM_aaa4_c\output',num2str(num),'_1881000']);
+IMo = double(O.Original)/255;
+IMf = double(F.IM)/255;
+
+
+
+IMoG=smooth3(IMo,'gaussian',3);
+
+figure;imshow(max(IMoG,[],3),[0 max(IMoG(:))])
+
+
+G1=fspecial('gauss',[round(k*sigma), round(k*sigma)], sigma);
+[Gx,Gy] = gradient(G1); 
+[Gxx,Gxy] = gradient(Gx);
+[Gyx,Gyy] = gradient(Gy);

@@ -30,11 +30,11 @@ Parameters.BranchMerger.NBestScenarios = inf;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % training module
-% figure(100)
-% imshow(max(Orig,[],3),[0 max(Orig(:))]) 
-% hold on 
-% PlotAM(AMlbl, r)
-% view(2)
+figure(100)
+imshow(max(Orig,[],3),[0 max(Orig(:))]) 
+hold on 
+PlotAM(AMlbl, r)
+view(2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if length(varargin)==1
@@ -116,19 +116,19 @@ ClusterN=length(ClusterV);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % training module
-% figure(100)
-% imshow(max(Orig,[],3),[0 max(Orig(:))]) 
-% hold on 
-% PlotAM(AMlbl, r)
+figure(100)
+imshow(max(Orig,[],3),[0 max(Orig(:))]) 
+hold on 
+PlotAM(AMlbl, r)
 
-% figure(101)
-% imshow(max(Orig,[],3),[0 max(Orig(:))]) 
-% hold on 
+figure(101)
+imshow(max(Orig,[],3),[0 max(Orig(:))]) 
+hold on 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Calculate the costs of all possible mergers
 for i=1:ClusterN
-    disp([num2str(i/ClusterN),', ',num2str(length(ClusterV{i})),'-point merger'])
+    disp([num2str(i),' -- ',num2str(i/ClusterN),', ',num2str(length(ClusterV{i})),'-point merger'])
     TipLabels=ClusterV{i};
     TipLabels(TipLabels>length(L))=TipLabels(TipLabels>length(L))-length(L);
     ClustersStr(i).end_point_label=TipLabels;
@@ -202,7 +202,7 @@ for i=1:ClusterN
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % training module
-%     user_input='n';
+    user_input='n';
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     for j=1:Nmergers
@@ -288,30 +288,30 @@ for i=1:ClusterN
             N2(j)=sum(temp)/2-N3(j)*2-N4(j)*3;
                         
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             % training module
-%             if ~strcmp(user_input,'y') && ~strcmp(user_input,'stop')
-%                 display([Dist(j),Overrun(j),Offset(j),Cos2(j),Cos3(j),Cos4(j),Icv(j),Rcv(j),N1(j)])
-%                 
-%                 figure(101)
-%                 h1=PlotAM_h(AM_connect, r_connect_temp);
-%                 h2=plot3(r_connect_temp(cumb_length,2),r_connect_temp(cumb_length,1),r_connect_temp(cumb_length,3),'r*');
-%                 user_input = input('Merge y/n?: ','s');
-%                 if user_input=='y'
-%                     ClustersStr(i).best_merger(j)=1;
-%                     ClustersStr(i).weights=1;
-%                 elseif user_input=='n'
-%                     ClustersStr(i).best_merger(j)=-1;
-%                 else
-%                     ClustersStr(i).best_merger(j)=NaN;
-%                 end
-%                 %delete(cell2mat(h1'),h2)
-%                 delete(h2)
-%                 for ii=1:length(h1)
-%                     delete(h1{ii})
-%                 end
-%             end
-% %             TrainingHistory = WSVMClassifier(ClustersStr,[],Parameters);
-% %             save('C:\Armen\DIADEM\Neuron Tracer V12\Parameter Files\TrainingHistory_L6','TrainingHistory','Parameters')
+            % training module
+            if ~strcmp(user_input,'y') && ~strcmp(user_input,'stop')
+                display([Dist(j),Overrun(j),Offset(j),Cos2(j),Cos3(j),Cos4(j),Icv(j),Rcv(j),N1(j)])
+                
+                figure(101)
+                h1=PlotAM_h(AM_connect, r_connect_temp);
+                h2=plot3(r_connect_temp(cumb_length,2),r_connect_temp(cumb_length,1),r_connect_temp(cumb_length,3),'r*');
+                user_input = input('Merge y/n?: ','s');
+                if user_input=='y'
+                    ClustersStr(i).best_merger(j)=1;
+                    ClustersStr(i).weights=1;
+                elseif user_input=='n'
+                    ClustersStr(i).best_merger(j)=-1;
+                else
+                    ClustersStr(i).best_merger(j)=NaN;
+                end
+                %delete(cell2mat(h1'),h2)
+                delete(h2)
+                for ii=1:length(h1)
+                    delete(h1{ii})
+                end
+            end
+%             TrainingHistory = WSVMClassifier(ClustersStr,[],Parameters);
+%             save('C:\Armen\DIADEM\Neuron Tracer V12\Parameter Files\TrainingHistory_L6','TrainingHistory','Parameters')
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
         end   
     end

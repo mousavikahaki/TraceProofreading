@@ -2,43 +2,47 @@ clear all
 close all
 clc
 addpath('E:\RegistrarBKP\Registrar\Evaluation\NeuronTracerV20')
-user = ['AS';'RG';'JC'];
-numuser = 3;
+user = ['SK';'HD'];
+numuser = 1;
 
-for num = 1:6
-    % Create Scenarios
-    parameter_file_path='C:\Users\Seyed\Documents\DatasetTests\AutomatedTracing\AutomatedTracing\NeuronTracerV20\Parameter Files\Parameters_L6.txt';
-    Parameters=Read_Parameter_File(parameter_file_path);
-    G = load(['E:\AutomatedTracing\Data\Traces\L1\',num2str(num),'_L6_',user(numuser,:),'.mat']);
-    AM = G.AM;
-    r = G.r;
-    R = G.R;
-    Orig = double(G.Original)/255;
-    [AMlbl,r,R,ClustersStr]=GenerateClustersStrW_new1(G.Original,AM,r,R,Parameters);
-    
-%     figure
-%     imshow(max(Orig,[],3))
-%     hold on
-%     PlotAM_1(AM,r)
-%     hold on
-%     Cluster_r =  ClustersStr(10).end_point_r;
-%     Cluster_n =  ClustersStr(10).end_point_n;
-%     Cluster_center = round([sum(Cluster_r(:,1))/length(Cluster_r(:,1)), sum(Cluster_r(:,2))/length(Cluster_r(:,2)), sum(Cluster_r(:,3))/length(Cluster_r(:,3))]);
-%     plot3(Cluster_r(:,2),Cluster_r(:,1),Cluster_r(:,3),'r*')
-    
-%     for i=1:size(Cluster_n,1)
-%         line([Cluster_r(i,2),Cluster_r(i,2)+Cluster_n(i,2)],[Cluster_r(i,1),Cluster_r(i,1)+Cluster_n(i,1)],[Cluster_r(i,3),Cluster_r(i,3)+Cluster_n(i,3)])
-%     end
-    save(['E:\AutomatedTracing\Data\Traces\L1\',num2str(num),'_L6_',user(numuser,:),'_withALLClusters1_NewFeatures.mat']);
-end
+% for num = 5:10
+%     % Create Scenarios
+%     parameter_file_path='C:\Users\Seyed\Documents\DatasetTests\AutomatedTracing\AutomatedTracing\NeuronTracerV20\Parameter Files\Parameters_L6.txt';
+%     Parameters=Read_Parameter_File(parameter_file_path);
+% %     G = load(['E:\AutomatedTracing\Data\Traces\L1\',num2str(num),'_L6_',user(numuser,:),'.mat']);
+%     G = load(['E:\AutomatedTracing\Data\Traces\L1_S2\',num2str(num),'_',user(numuser,:),'.mat']);
+%     
+%     AM = G.AM;
+%     r = G.r;
+%     R = G.R;
+%     Orig = double(G.Original)/255;
+%     [AMlbl,r,R,ClustersStr]=GenerateClustersStrW_new1(G.Original,AM,r,R,Parameters);
+%     
+% %     figure
+% %     imshow(max(Orig,[],3))
+% %     hold on
+% %     PlotAM_1(AM,r)
+% %     hold on
+% %     Cluster_r =  ClustersStr(10).en d_point_r;
+% %     Cluster_n =  ClustersStr(10).end_point_n;
+% %     Cluster_center = round([sum(Cluster_r(:,1))/length(Cluster_r(:,1)), sum(Cluster_r(:,2))/length(Cluster_r(:,2)), sum(Cluster_r(:,3))/length(Cluster_r(:,3))]);
+% %     plot3(Cluster_r(:,2),Cluster_r(:,1),Cluster_r(:,3),'r*')
+%     
+% %     for i=1:size(Cluster_n,1)
+% %         line([Cluster_r(i,2),Cluster_r(i,2)+Cluster_n(i,2)],[Cluster_r(i,1),Cluster_r(i,1)+Cluster_n(i,1)],[Cluster_r(i,3),Cluster_r(i,3)+Cluster_n(i,3)])
+% %     end
+%     
+% %     save(['E:\AutomatedTracing\Data\Traces\L1\',num2str(num),'_L6_',user(numuser,:),'_withALLClusters1_NewFeatures.mat']);
+%     save(['E:\AutomatedTracing\Data\Traces\L1_S2\',num2str(num),'_',user(numuser,:),'_withALLClusters_ManuallyMarkedCorrect_NewFeatures.mat']);
+% end
 
 pad = 6;
 TCounter = 1;
 
- for n = 1:6
-    D1 = load(['E:\AutomatedTracing\Data\Traces\L1_org\',num2str(n),'_L6_',user(numuser,:),'_withALLClusters1.mat']);
-    D2 = load(['E:\AutomatedTracing\Data\Traces\L1\',num2str(n),'_L6_',user(numuser,:),'_withALLClusters1_NewFeatures.mat']);
-%     D1 = D2;
+ for n = 1:10
+    D1 = load(['E:\AutomatedTracing\Data\Traces\L1_S2\',num2str(n),'_',user(numuser,:),'_withALLClusters_ManuallyMarkedCorrect_NewFeatures.mat']);
+%     D2 = load(['E:\AutomatedTracing\Data\Traces\L1_S2\',num2str(n),'_',user(numuser,:),'_withALLClusters1_NewFeatures.mat']);
+    D2 = D1;
     ClustersStr = D1.ClustersStr;
     ClustersStr_NewFeatures = D2.ClustersStr;
     
@@ -57,7 +61,7 @@ TCounter = 1;
     end
     
     
-    GG = load(['E:\AutomatedTracing\Data\Traces\L1_org\',num2str(n),'_L6_',user(numuser,:),'.mat']);
+    GG = load(['E:\AutomatedTracing\Data\Traces\L1_S2\',num2str(n),'_',user(numuser,:),'.mat']);
     Orig = double(GG.Original)/255;
     Orig = padarray(Orig,[pad,pad,pad]);
     
@@ -100,8 +104,9 @@ for i = 1:size(TData,2)
     NewFeatures{i} = TData(i).NewFeatures;
     Scenarios{i} = TData(i).Scenario;
 end
-path = ['E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=',user(numuser,:),'.mat'];
 
+% path = ['E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=',user(numuser,:),'.mat'];
+path = ['E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S2B_IMonce_100_scen_NEW_Inv_FEATURES_User=',user(numuser,:),'.mat'];
 % % path = ['E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\All_scenarios_label_14Features_Image_Trace_new_withIMnum_with_local_XYZ_NewFeatures_Fixedlocal_Augmented_IM=',num2str(n),'.mat'];
 save(path,'IMs','Scenarios','Labels','IMnum','NewFeatures');
 

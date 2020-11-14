@@ -1,4 +1,13 @@
 #
+# Created on 9/15/2020
+#
+# @author Seyed
+#
+# Email: mousavikahaki@gmail.com
+#
+
+
+#
 # Created on 9/17/2019
 #
 # @author Seyed
@@ -55,36 +64,28 @@ root_dir = 'E:/AutomatedTracing/TraceProofreading/TraceProofreading'
 rotated_IMs = np.zeros([13,13,13,len(rotation_degrees)])
 
 for UseIMage in lst_useImage:
-    for run in [1]:
+    for run in [0]:
         for ImagetoTest in [1]:
 
             epoch  = 100
-            batch_size = 80 #50
+            batch_size = 30 #50
             verbose=1 #verbose=1 will show you an animated progress bar
             doSMOTE = False #do replicate data using SMOTE method
-            learning_Rate = 0.0008 # default  =0.01
+            learning_Rate = 0.001 # default  =0.01
 
 
             x = datetime.datetime.today()
             nowTimeDate = x.strftime("%b_%d_%H_%M")
-            # PltNAme = 'AT_XYZ_is5_'+str(useXYZ_Positions)+'_'+str(ImagetoTest)+'_run=2'+nowTimeDate
+            # PltNAme = 'AT_XYZ_is_'+str(useXYZ_Positions)+'_'+str(ImagetoTest)+'_run=2'+nowTimeDate
 
-            PltNAme = 'S1and2_SmUnet1TEST20INV_FEATURES_CONV=' + str(UseConv) + '_LR=' + str(learning_Rate) + '_100_sce_' + str(
+            PltNAme = 'NEW_SmUnet1TEST20INV_FEATURES_CONV=' + str(UseConv) + '_LR=' + str(learning_Rate) + '_100_sce_' + str(
                 kernel_initializer) + '_IM=' + str(ImagetoTest) + 'bchSiz=' + str(batch_size) + '_Use_IM=' + str(
                 UseIMage) + '_Epoch=' + str(
                 epoch) + '_run=' + str(run + 1)
             print(PltNAme)
 
-            # Dataset 1
-            # or use (should be the same) E:\AutomatedTracing\TraceProofreading\TraceProofreading\data\datafeed\IMonce_limit100scen_NEW_Inv_FEATURES.mat
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
 
-            # # Dataset 2
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S2B_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
-
-            # Dataset 1 and 2
-            filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S1and2_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
-
+            filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
             ScenariosData = sio.loadmat(filepath)
 
 
@@ -268,43 +269,28 @@ for UseIMage in lst_useImage:
                 # x = Conv3D(64, (3, 3, 3), padding='same', activation='relu')(x)  # change to leakyRelu to avoid dead neurons
                 # x = MaxPooling3D((2, 2, 2))(x)
                 # x2 = Flatten()(x)
-
-                # fms = 8 # or more if no improve
+                fms = 8
                 input1 = Input(shape=(13, 13, 13, 1), name="inputs")
 
                 params = dict(kernel_size=(3, 3, 3), activation=None,
                               padding="same", kernel_initializer="he_uniform")
 
                 # Transposed convolution parameters
-                #params_trans = dict(kernel_size=(2, 2, 2), strides=(1, 1, 1), padding="same")
+                params_trans = dict(kernel_size=(2, 2, 2), strides=(2, 2, 2), padding="same")
 
                 # BEGIN - Encoding path
-                # encodeA = ConvolutionBlock(input1, "encodeA", fms, params)
-
-                name = "encodeA"
-                x = Conv3D(filters=16, **params, name=name + "_conv0")(input1)
-                x = BatchNormalization(name=name + "_bn0")(x)
-                x = Activation("relu", name=name + "_relu0")(x)
-                x = Conv3D(filters=16, **params, name=name + "_conv1")(x)
-                x = BatchNormalization(name=name + "_bn1")(x)
-                encodeA = Activation("relu", name=name)(x)
+                encodeA = ConvolutionBlock(input1, "encodeA", fms, params)
                 poolA = MaxPooling3D(name="poolA", pool_size=(2, 2, 2))(encodeA)
 
-                name = "encodeB"
-                x = Conv3D(filters=32, **params, name=name + "_conv0")(poolA)
-                x = BatchNormalization(name=name + "_bn0")(x)
-                x = Activation("relu", name=name + "_relu0")(x)
-
-                x = Conv3D(filters=32, **params, name=name + "_conv1")(x)
-                x = BatchNormalization(name=name + "_bn1")(x)
-                encodeB = Activation("relu", name=name)(x)
+                encodeB = ConvolutionBlock(poolA, "encodeB", fms * 2, params)
                 poolB = MaxPooling3D(name="poolB", pool_size=(2, 2, 2))(encodeB)
                 #
                 # encodeC = ConvolutionBlock(poolB, "encodeC", fms * 4, params)
                 # poolC = MaxPooling3D(name="poolC", pool_size=(2, 2, 2))(encodeC)
                 #
                 # encodeD = ConvolutionBlock(poolC, "encodeD", fms * 8, params)
-                x2 = Flatten()(poolB) #was PoolA
+
+                x2 = Flatten()(poolB)
             else:
                 # # Relu
                 input1 = keras.layers.Input(shape=(XIMs_train.shape[1],))
@@ -390,7 +376,7 @@ for UseIMage in lst_useImage:
                                 yIMs_train,
                                 epochs=epoch,
                                 batch_size=batch_size,
-                                validation_split=0.30,
+                                validation_split=0.33,
                                 verbose=1
                                 ,callbacks=[checkpoint_max_val_acc,checkpoint_min_val_acc,checkpoint_max_val_loss,checkpoint_min_val_loss,tensorboard],
                                 )
@@ -402,40 +388,8 @@ for UseIMage in lst_useImage:
 # model = load_model('DataFiles/'+PltNAme+'.h5')
 
 
-
 print(model.summary())
 from keras.utils.vis_utils import plot_model
 pltName = root_dir + '/data/models/'+PltNAme+'.png'
 print(pltName)
 plot_model(model, to_file=pltName, show_shapes=True, show_layer_names=True)
-
-
-## Add Acc and Save with file
-
-
-
-# # Plot training & validation accuracy values
-plt.figure()
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
-plt.title('Model accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Validation'], loc='upper left')
-fig=plt.show()
-pltLoss = root_dir + '/data/models/'+PltNAme+'_Acc.png'
-plt.savefig(pltLoss)
-print(pltLoss)
-
-# Plot training & validation loss values
-plt.figure()
-plt.plot(history.history['loss'])
-plt.plot(history.history['val_loss'])
-plt.title('Model loss')
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Validation'], loc='upper left')
-fig=plt.show()
-pltLoss = root_dir + '/data/models/'+PltNAme+'_loss.png'
-plt.savefig(pltLoss)
-print(pltLoss)

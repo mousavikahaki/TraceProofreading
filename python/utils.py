@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from variables import *
 from models import *
-from data import *
+from datas import *
 
 
 def ind2loc(Im_shape,index,input_size,stride):

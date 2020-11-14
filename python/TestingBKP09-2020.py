@@ -1,4 +1,13 @@
 #
+# Created on 9/15/2020
+#
+# @author Seyed
+#
+# Email: mousavikahaki@gmail.com
+#
+
+
+#
 # Created on 9/17/2019
 #
 # @author Seyed
@@ -74,9 +83,10 @@ for UseIMage in lst_useImage:
             print(PltNAme)
 
 
-
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=RG.mat'
+            if ImagetoTest in [3,6]:
+                filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
+            else:
+                filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=RG.mat'
 
             ScenariosData = sio.loadmat(filepath)
 
@@ -222,19 +232,9 @@ for UseIMage in lst_useImage:
                 XIMs_test = np.zeros(XIMs_test.shape)
                 print('Not Using Image')
 
-            # PltNAme = 'NEW_SmUnet1TEST19INV_FEATURES_CONV=True_LR=0.001_100_sce_he_uniform_IM=1bchSiz=25_Use_IM=True_Epoch=200_run=1'
-
-            # PltNAme = 'NEW_1_INV_FEATURES_CONV=False_LR=0.001_100_sce_he_uniform_IM=3bchSiz=50_Use_IM=True_Epoch=150_run=' + str(run+1)
-
-
             model = load_model(root_dir + '/data/models/' + PltNAme + '.h5')
 
             filepath = root_dir + '/data/models/' + PltNAme + "_weights.min_val_loss.hdf5"
-
-            # filepath = root_dir + '/data/models/' + PltNAme + "_weights.max_val_acc.hdf5"
-
-
-            print(filepath)
             # checkpoint_val_loss = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
             # filepath = 'DataFiles/' + PltNAme + "_weights.best_AUC.hdf5"
@@ -323,18 +323,13 @@ for UseIMage in lst_useImage:
         # io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1.mat', mdict={'Result': Result})
         # print('Done!')
 
-
-
-
+print(Result)
 import scipy.io as io
 basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
 io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat', mdict={'Result': Result})
-print('Result Data: '+ basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat')
+print('Done!')
 
-print(Result)
 
-Result_data = Result[0,:,:]
 
-print(Result_data.mean(axis=1))
 
 print("Done!")

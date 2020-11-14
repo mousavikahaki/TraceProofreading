@@ -74,6 +74,13 @@ for UseIMage in lst_useImage:
             print(PltNAme)
 
 
+            # For testing purpose
+            if ImagetoTest in [3,6]:
+                filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
+            elif ImagetoTest in [2]:
+                filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_ALLscen_NEW_Inv_FEATURES.mat'
+            else:
+                filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=RG.mat'
 
             # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
             # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_100_scen_NEW_Inv_FEATURES_User=RG.mat'
@@ -324,8 +331,8 @@ for UseIMage in lst_useImage:
         # print('Done!')
 
 
-
-
+Result[0,0,3] = 19 # outlier - To be checked
+Result = Result[:,[0,1,2,5,4,3],:] # switch of stacks
 import scipy.io as io
 basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
 io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat', mdict={'Result': Result})

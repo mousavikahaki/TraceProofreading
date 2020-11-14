@@ -1,4 +1,4 @@
-root_dir = 'C:\Users\Seyed\Documents\TraceProofreading'
+root_dir = 'C:/Users/Seyed/Documents/TraceProofreading'
 mat_file_dir = root_dir + '/data/datafeed/'
 weights_dir = root_dir + '/data/models/'
 data_dir = root_dir + '/data/'

@@ -1,15 +1,16 @@
 clear all
 close all
 clc
-addpath('E:\RegistrarBKP\Registrar\Evaluation\NeuronTracerV20')
+rootfolder = 'E:\AutomatedTracing\TraceProofreading\';
+addpath([rootfolder,'common_functions\NeuronTracerV20'])
 user = ['AS';'RG';'JC'];
 numuser = 3;
 
 for num = 1:6
     % Create Scenarios
-    parameter_file_path='C:\Users\Seyed\Documents\DatasetTests\AutomatedTracing\AutomatedTracing\NeuronTracerV20\Parameter Files\Parameters_L6.txt';
+    parameter_file_path=[rootfolder,'common_functions\Parameter Files\Parameters_L6.txt'];
     Parameters=Read_Parameter_File(parameter_file_path);
-    G = load(['E:\AutomatedTracing\Data\Traces\L1\',num2str(num),'_L6_',user(numuser,:),'.mat']);
+    G = load(['data\traces\L1\',num2str(num),'_L6_',user(numuser,:),'.mat']);
     AM = G.AM;
     r = G.r;
     R = G.R;
@@ -36,9 +37,9 @@ pad = 6;
 TCounter = 1;
 
  for n = 1:6
-    D1 = load(['E:\AutomatedTracing\Data\Traces\L1_org\',num2str(n),'_L6_',user(numuser,:),'_withALLClusters1.mat']);
+%     D1 = load(['E:\AutomatedTracing\Data\Traces\L1_org\',num2str(n),'_L6_',user(numuser,:),'_withALLClusters1.mat']);
     D2 = load(['E:\AutomatedTracing\Data\Traces\L1\',num2str(n),'_L6_',user(numuser,:),'_withALLClusters1_NewFeatures.mat']);
-%     D1 = D2;
+    D1 = D2;
     ClustersStr = D1.ClustersStr;
     ClustersStr_NewFeatures = D2.ClustersStr;
     

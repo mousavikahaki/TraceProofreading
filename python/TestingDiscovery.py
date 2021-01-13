@@ -32,7 +32,7 @@ from collections import Counter
 
 
 
-Result = np.zeros([2, 6, 5])
+Result = np.zeros([2, 16, 5])
 # lst_XYZ = ['True','False']
 # lst_useImage = ['True','False']
 
@@ -43,12 +43,25 @@ kernel_initializer='he_uniform'
 rotation_degrees = [0,90,180,270]
 flips = ['right']
 UseConv = True
-modelnum = 0
+
 root_dir = 'E:/AutomatedTracing/TraceProofreading/TraceProofreading'
 
+
+# modelFolder = '/models_best_10232020'
+
+# modelnum = 0
+# modelFolder = '/models_best_3Run_10232020'
+
+# modelnum = 1
+# modelFolder = 'models_best_3Run_12092020'
+
+modelnum = 2
+modelFolder = 'models_best_3Run_01112021'
+
+
 for UseIMage in lst_useImage:
-    for ImagetoTest in [7]:
-        for run in [0]:
+    for ImagetoTest in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]:
+        for run in [0,1,2]:
 
 
             epoch = 100
@@ -67,11 +80,7 @@ for UseIMage in lst_useImage:
             #             #     epoch) + '_run=' + str(run + 1)
             #             # print(PltNAme)
 
-            PltNAme = 'S1_2_SmUnet1TEST20INV_FEATURES_CONV=' + str(UseConv) + '_LR=' + str(learning_Rate) + '_100_sce_' + str(
-                kernel_initializer) + '_IM=' + str(ImagetoTest) + 'bchSiz=' + str(batch_size) + '_Use_IM=' + str(
-                UseIMage) + '_Epoch=' + str(
-                epoch) + '_run=' + str(run + 1)
-            print(PltNAme)
+
 
 
 
@@ -228,9 +237,9 @@ for UseIMage in lst_useImage:
             # PltNAme = 'NEW_1_INV_FEATURES_CONV=False_LR=0.001_100_sce_he_uniform_IM=3bchSiz=50_Use_IM=True_Epoch=150_run=' + str(run+1)
 
 
-            model = load_model(root_dir + '/data/models/' + PltNAme + '.h5')
+            model = load_model(root_dir + '/data/' + modelFolder + '/IM=' + str(ImagetoTest) + '_run=' + str(run+1) + '.h5')
 
-            filepath = root_dir + '/data/models/' + PltNAme + "_weights.min_val_loss.hdf5"
+            filepath = root_dir + '/data/' + modelFolder + '/IM=' + str(ImagetoTest) + '_run=' + str(run+1) + ".hdf5"
 
             # filepath = root_dir + '/data/models/' + PltNAme + "_weights.max_val_acc.hdf5"
 
@@ -266,7 +275,7 @@ for UseIMage in lst_useImage:
 
 
             #######                Check Correct Scenarios
-            ClusterStr = sio.loadmat(root_dir + '/data/mat/' +str(ImagetoTest)+'_L6_AS_withALLClusters1.mat')
+            ClusterStr = sio.loadmat(root_dir + '/data/mat_Discovery/' +str(ImagetoTest)+'_L6_AS_withALLClusters1.mat')
             ClusterStr1 = ClusterStr['ClustersStr']
             y_pred_Final = np.zeros(shape=(ClusterStr1.shape[1],ClusterStr1[0,ClusterStr1.shape[1]-1]['cost_components'].shape[1]))
             #y_pred_Final = np.zeros(shape=(119,375))
@@ -283,7 +292,7 @@ for UseIMage in lst_useImage:
                     counter = counter + 1
 
             # sio.savemat('E:/AutomatedTracing/Data/TrainingData/scenarios_images_features/Final_Shuffled_Matrix_Predict_IM_'+str(ImagetoTest)+'_moldel='+str(modelnum+1)+'_run='+str(run+1)+'_EndpointFeatures.mat',{"y_pred":y_pred_Final})
-            resultfile = 'E:/AutomatedTracing/Data/TrainingData/scenarios_images_features/Final_Shuffled_Matrix_Predict_IM_' + str(
+            resultfile = 'E:/AutomatedTracing/Data/TrainingData/scenarios_images_features/Discovery3run_Final_Shuffled_Matrix_Predict_IM_' + str(
                     ImagetoTest) + '_moldel=' + str(modelnum + 1) + '_run=' + str(run + 1) + '_NewFeatures_li100_SmallUnet1_.mat'
             sio.savemat(resultfile
                 ,
@@ -316,28 +325,29 @@ for UseIMage in lst_useImage:
             # TP = corrctnum
             # FN = incorrectnum
             #
-            # Result[0,ImagetoTest-1,run] = incorrectnum # correct scenario
-            # Result[1, ImagetoTest-1, run] = corrctnum+incorrectnum # total scenario
-
-
-
-        # import scipy.io as io
-        # basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
-        # io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1.mat', mdict={'Result': Result})
-        # print('Done!')
-
+            Result[0,ImagetoTest-1,run] = incorrectnum # correct scenario
+            Result[1, ImagetoTest-1, run] = corrctnum+incorrectnum # total scenario
 
 
 
 import scipy.io as io
-basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
-io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat', mdict={'Result': Result})
-print('Result Data: '+ basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat')
+# basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
+basePath = 'E:/AutomatedTracing/TraceProofreading/'
+io.savemat(basePath+'Discovery3run_Final_Shuffled_Matrix_Predict_IM_model=' + str(modelnum + 1) + '.mat', mdict={'Result': Result})
+print('Done!')
 
-print(Result)
 
-Result_data = Result[0,:,:]
 
-print(Result_data.mean(axis=1))
 
-print("Done!")
+# import scipy.io as io
+# basePath = 'E:/AutomatedTracing/AutomatedTracing/Python/MachineLeatningAutomatedTracing/DataFiles/Tensorboard/All_points/'
+# io.savemat(basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_Discovery.mat', mdict={'Result': Result})
+# print('Result Data: '+ basePath+'IM='+str(ImagetoTest)+'_NewFeatures_li100_reg_com_SmallUnet1_.mat')
+#
+# print(Result)
+#
+# Result_data = Result[0,:,:]
+#
+# print(Result_data.mean(axis=1))
+#
+# print("Done!")

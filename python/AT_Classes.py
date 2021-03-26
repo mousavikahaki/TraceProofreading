@@ -1,5 +1,5 @@
 #
-# Created on 8/13/2019
+# Created on 9/17/2019
 #
 # @author Seyed
 #
@@ -12,7 +12,7 @@ import matlab.engine
 import matplotlib.pyplot as plt
 
 class IM3D:
-
+    # init method or constructor, to pass automatically
     def __init__(self, IM, IM_Max = None):
         self.IM = IM
         self.IM_Max = IM_Max
@@ -34,11 +34,9 @@ class IM3D:
 
 
 class Trace:
-
     def __init__(self, AM, r, IM):
         self.AM = AM
         self.r = r
-        # self.R = R
         self.IM = IM
         self.var = {}
 
@@ -46,17 +44,14 @@ class Trace:
         print(self.AM.shape)
         self.var['AM_BP'] = np.asarray(self.AM)
         self.var['r'] = self.r
-        # self.var['R'] = self.R
         self.var['IM'] = self.IM
         sio.savemat('temp.mat', self.var)
-        ## Plot Trace and Image
         eng = matlab.engine.start_matlab()
         eng.evalc("s = load('temp.mat');figure;imshow(max(s.IM,[],3));hold on;PlotAM_1(s.AM_BP{1}, s.r)")
         return eng
 
     def GetBranch(self):
         AM_BP = np.zeros((self.AM.shape))
-        # maxvalue = []
         BP = []
         AM_G_A = self.AM.toarray()
         for i in range(self.AM.shape[1]):
@@ -65,11 +60,9 @@ class Trace:
                 BP.append(i)
                 AM_BP[i, :] = AM_G_A[i, :]
                 AM_BP[:, i] = AM_G_A[:, i]
-
         return sparse.csr_matrix(AM_BP)
 
     def removeBranches(self):
-        # BP = []
         AM_rem_br = self.AM.toarray()
         for i in range(len(AM_rem_br)):
             maxvalue = np.count_nonzero(AM_rem_br[i,:])
@@ -88,7 +81,6 @@ class Trace:
         r = G['r']
         R = G['R']
         return IM,AM,r,R
-
 
 
 class cl_scenario:

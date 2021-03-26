@@ -6,34 +6,38 @@
 # Email: mousavikahaki@gmail.com
 #
 
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import seed
 from keras.constraints import maxnorm
 import seaborn as sns
+import scipy
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Activation, BatchNormalization, Concatenate
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, cohen_kappa_score,balanced_accuracy_score, accuracy_score
+import keras
+from keras.layers import (Concatenate, Conv3D, Dropout, Input, BatchNormalization, Flatten,
+                          Dense, MaxPooling3D, UpSampling3D, Activation, Reshape, Lambda,
+                           Permute)
 from keras.callbacks import TensorBoard
-from keras.optimizers import SGD
 import datetime
 import scipy.io as sio
 import AT_Classes as Classes
-from imblearn.over_sampling import SMOTE
-from collections import Counter
-import scipy
+from keras.callbacks import LearningRateScheduler
+import math
 
 
+def step_decay(epoch, lr):
+    drop = 0.5
+    epochs_drop = 2.0
+    lrate = lr * math.pow(drop,math.floor((1+epoch)/epochs_drop))
+    return lrate
+
+lrate = LearningRateScheduler(step_decay)
 
 
-# lst_XYZ = ['True','False']
-# lst_useImage = ['True','False']
-
-def ConvolutionBlock(x, name, fms, params):
+# Define Convolutions Block
+def convolutionblock(x, name, fms, params):
     x = Conv3D(filters=fms, **params, name=name+"_conv0")(x)
     x = BatchNormalization(name=name+"_bn0")(x)
     x = Activation("relu", name=name+"_relu0")(x)
@@ -43,97 +47,124 @@ def ConvolutionBlock(x, name, fms, params):
     x = Activation("relu", name=name)(x)
     return x
 
-lst_XYZ = ['False']
-lst_useImage = ['True']
-useEndpointFeatures = 'True'
-kernel_initializer='he_uniform' # HeNormal Identity LecunUniform LecunNormal Orthogonal
+
+
+import tensorflow as tf
+
+# from tensorflow.keras import optimizers
+#
+# initial_learning_rate = 0.1
+# lr_schedule = optimizers.schedules.ExponentialDecay(
+#     initial_learning_rate,
+#     decay_steps=100000,
+#     decay_rate=0.96,
+#     staircase=True)
+
+
+
+
+lst_useImage = ['True']             # Using the second tower or not, Default = ['True','False']
+useEndpointFeatures = 'True'        # Use the proposed endpoint features
+kernel_initializer='orthogonal'     # Kernel Initializer, Methods: orthogonal, HeNormal -> ReLu, Identity, LecunUniform, LecunNormal, Xavier - >sigmoid
 rotation_degrees = [0,90,180,270]
 flips = ['right']
 UseConv = True
+maxNumPoints = 12                   # Limit the maximum number of merging points
+
 root_dir = 'E:/AutomatedTracing/TraceProofreading/TraceProofreading'
 
 rotated_IMs = np.zeros([13,13,13,len(rotation_degrees)])
 
+# Using the second tower or not
 for UseIMage in lst_useImage:
+    # Using one-leave-out strategy,
+    # Choose the stack number to test
+    # It will ignore the test stack in the Training
     for ImagetoTest in [1]:
-        for run in [0,1,2]:
+        # Run multiple times to get variation in results
+        for run in range(2):
 
-            epoch  = 60
-            batch_size = 50 #50
-            verbose= 1 #verbose=1 will show you an animated progress bar
-            doSMOTE = False #do replicate data using SMOTE method
-            learning_Rate = 0.001#0.0008 # default  =0.01
+            epoch  = 150             # number of epochs
+            batch_size = 50         # batch size, Defualt = 50
+            verbose= 1              # verbose=1 will show you an animated progress bar
+            # doSMOTE = False         # Replicate data using SMOTE method, calculate k-nearest neighbors, N examples randomly selected from its knn, generate new data between samples
+            learning_Rate = 0.001   # Learning Rate, # Default  =0.001
 
-
-            x = datetime.datetime.today()
-            nowTimeDate = x.strftime("%b_%d_%H_%M")
+            # Define now time for unique names in the model
+            T = datetime.datetime.today()
+            nowTimeDate = T.strftime("%b_%d_%H_%M")
             # PltNAme = 'AT_XYZ_is5_'+str(useXYZ_Positions)+'_'+str(ImagetoTest)+'_run=2'+nowTimeDate
 
-            PltNAme = 'T4_Drop_20_3LAyerHalf81616_kernel555_S1_2_SmUnet1TEST20INV_FEATURES_CONV=' + str(UseConv) + '_LR=' + str(learning_Rate) + '_100_sce_' + str(
+            PltNAme = 'TEMP22_Drop_20_3LAyerHalf81616_kernel555_S1_2_SmUnet1TEST20INV_FEATURES_CONV=' + str(UseConv) + '_LR=' + str(learning_Rate) + '_100_sce_' + str(
                 kernel_initializer) + '_IM=' + str(ImagetoTest) + 'bchSiz=' + str(batch_size) + '_Use_IM=' + str(
                 UseIMage) + '_Epoch=' + str(
-                epoch) + '_run=' + str(run + 1)
+                epoch) + '_run=' + str(run + 1) + '_' +nowTimeDate
             print(PltNAme)
 
-            # Dataset 1
-            # or use (should be the same) E:\AutomatedTracing\TraceProofreading\TraceProofreading\data\datafeed\IMonce_limit100scen_NEW_Inv_FEATURES.mat
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
+            # # Use this for Dataset 1
+            # or use (should be the same)
+            # E:\AutomatedTracing\TraceProofreading\TraceProofreading\data\datafeed\IMonce_limit100scen_NEW_Inv_FEATURES.mat
+            # filepath =
+            # 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\IMonce_limit100scen_NEW_Inv_FEATURES.mat'
 
-            # # Dataset 2
-            # filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S2B_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
+            # # Use this for Dataset 2
+            # filepath =
+            # 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S2B_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
 
-            # Dataset 1 and 2
-            filepath = 'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S1and2_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
+            # Use this for combination of Datasets 1 and 2
+            filepath = \
+                'E:\AutomatedTraceResults\DataForConnectingTraining\Data_For_AE_BranchScenarios\S1and2_IMonce_100_scen_NEW_Inv_FEATURES_User=SK.mat'
 
+            # Load scienaros information
             ScenariosData = sio.loadmat(filepath)
 
-
+            # Get Image numbers
             IMnums = ScenariosData['IMnum']
             # IMnum = IMnums[0,IMnums.shape[1]-1]
             # IMnums.shape
 
+            # Get Features
             Features = ScenariosData['NewFeatures']
             # Feature = Features[0,Features.shape[1]-1]
             # Feature.shape
 
+            # Get Image Intensities Data
             IMs = ScenariosData['IMs']
             # IMtmp = IMs[0,IMs.shape[1]-1]
             # IMtmp.shape
 
+            # Get Scenarios Information
             Scenarios = ScenariosData['Scenarios']
             # Scenarios.shape
             # Scenarios[0,Scenarios.shape[1]-1]
 
+            # Get Labels for Training
             Labels = ScenariosData['Labels']
             # Labels[0,Labels.shape[1]-1]
 
-
-
-            maxNumPoints = 12
-
+            # Clear Data for Each Run
             IMsTrain = []
             FeatureTrain = []
             LabelsTrain = []
             ScenariosTrain = []
-
             IMsTest = []
             FeatureTest = []
             LabelsTest = []
             ScenariosTest = []
 
-
+            # Use Uper triangle in matrix,
+            # the scienario matrix is symmetric matrix but you may use all data
             UseUpper = False
             numScenarios = Scenarios.shape
             counter = 0
 
-
+            # Generating Scienaros and Feature Data
             for i in range(numScenarios[1]):
                 scenario = Scenarios[0,i]
 
                 IM = IMs[0,i]
                 # print(IM.shape)
                 Feature = Features[0, i]
-
 
                 # if scenario.shape[0] == 3:
                 #     maxNumPoints = 3
@@ -150,53 +181,38 @@ for UseIMage in lst_useImage:
                 # if scenario.any():
                 # scenarios.shape[2]
 
+                # Geting Scenario data from matrix (upper or all)
                 S = Classes.cl_scenario(maxNumPoints, scenario.shape[0],scenario,0)
                 if UseUpper:
                     scenario_arr = S.getUpperArr()
                 else:
                     scenario_arr = S.getWholeArr()
 
+                # Exclude the Test Image in Training
+                # Generating Training and Test Data
                 if IMnums[0, i] != ImagetoTest:
                     ScenariosTrain.append(scenario_arr)
                     IMsTrain.append(IM)
-
                     FeatureTrain.append(Feature)
-
                     LabelsTrain.append(Label)
-
                 else:
                     ScenariosTest.append(scenario_arr)
                     IMsTest.append(IM)
                     FeatureTest.append(Feature)
-
                     LabelsTest.append(Label)
 
-
+            # Numpy array creation
             ScenariosTrain = np.asarray(ScenariosTrain, dtype=np.float)
             IMsTrain = np.asarray(IMsTrain, dtype=np.float)
             IMsTrain3D = IMsTrain
             FeatureTrain = np.asarray(FeatureTrain, dtype=np.float)
             FeatureTrain = FeatureTrain[:,0,:]
-
-
             LabelsTrain = np.asarray(LabelsTrain, dtype=np.float)
             LabelsTrain = LabelsTrain[:,0]
             LabelsTrain = LabelsTrain[:,0]
-            IMsTrain1 = np.reshape(IMsTrain, [IMsTrain.shape[0],np.product(IMsTrain[0,:,:,:].shape)])
+            IMTrain = np.reshape(IMsTrain, [IMsTrain.shape[0],np.product(IMsTrain[0,:,:,:].shape)])
 
-            ScenariosTest = np.asarray(ScenariosTest, dtype=np.float)
-            IMsTest = np.asarray(IMsTest, dtype=np.float)
-            IMsTest3D = IMsTest
-            FeatureTest = np.asarray(FeatureTest, dtype=np.float)
-            FeatureTest = FeatureTest[:,0,:]
-
-            # Endpoint_features_Test = Endpoint_features_Test[:, :, 0]
-            LabelsTest = np.asarray(LabelsTest, dtype=np.float)
-            LabelsTest = LabelsTest[:,0]
-            LabelsTest = LabelsTest[:,0]
-            IMsTest1 = np.reshape(IMsTest, [IMsTest.shape[0],np.product(IMsTest[0,:,:,:].shape)])
-
-            # Sbhuffle Data
+            # Shuffling Data
             indices = np.arange(len(ScenariosTrain))
             np.random.shuffle(indices)
             ScenariosTrain = ScenariosTrain[indices]
@@ -205,84 +221,45 @@ for UseIMage in lst_useImage:
 
             LabelsTrain = LabelsTrain[indices]
 
-            # indices = np.arange(len(ScenariosTest))
-            # np.random.shuffle(indices)
-            # ScenariosTest = ScenariosTest[indices]
-            # IMsTest = IMsTest[indices]
-            # FeatureTest = FeatureTest[indices]
-            # LabelsTest = LabelsTest[indices]
-
-            # XIMs_train, XIMs_test, XFeature_train, XFeature_test, XScenarios_train, XScenarios_test,\
-            # yIMs_train, yIMs_test,yFeature_train, yFeature_test,yScenarios_train, yScenarios_test  \
-            #     = train_test_split(IMsTrain1,FeatureTrain,ScenariosTrain, LabelsTrain,LabelsTrain,LabelsTrain, test_size=0.2)
-
-
-            XIMs_train = IMsTrain1
-
-            XFeature_train = FeatureTrain
-
-            XScenarios_train = ScenariosTrain
-            yIMs_train = LabelsTrain
-
-            XIMs_test = IMsTest1
-            XFeature_test = FeatureTest
-
-            XScenarios_test = ScenariosTest
-            yIMs_test = LabelsTest
-            yFeature_test = LabelsTest
-            yScenarios_test = LabelsTest
-
-            # Plot Data Count
-            # z_train = Counter(yIMs_train)
-            # sns.countplot(yIMs_train)
-
-
-
-            print(XIMs_train.shape)
-            print(XFeature_train.shape)
-            print(XScenarios_train.shape)
-            print(yIMs_train.shape)
+            print(IMTrain.shape)
+            print(FeatureTrain.shape)
+            print(ScenariosTrain.shape)
+            print(LabelsTrain.shape)
 
             # Plot data count
             # z_train = Counter(yIMs_train)
             # sns.countplot(yIMs_train)
 
-
             # to ignore image data
             if UseIMage == False:
-                XIMs_train = np.zeros(XIMs_train.shape)
-                XIMs_test = np.zeros(XIMs_test.shape)
+                IMTrain = np.zeros(IMTrain.shape)
+                IMsTest = np.zeros(IMsTest.shape)
                 print('Not Using Image')
 
-
-            import keras
-            from keras.layers import Conv3D, MaxPooling3D, Input, Dense, Flatten
-            from keras.layers import (Concatenate, Conv3D, Dropout, Input,
-                                      Dense, MaxPooling3D, UpSampling3D, Activation, Reshape, Lambda,
-                                      Permute)
-
+            # this goes for using Conv or sequential method for image featuers
             if UseConv:
                 # input1 = Input(shape=(13, 13, 13, 1))
                 # x = Conv3D(32, (3, 3, 3), padding='same', activation='relu')(
                 #     input1)  # change to leakyRelu to avoid dead neurons
-                # x = Conv3D(64, (3, 3, 3), padding='same', activation='relu')(x)  # change to leakyRelu to avoid dead neurons
+                # x = Conv3D(64, (3, 3, 3), padding='same', activation='relu')(x)
                 # x = MaxPooling3D((2, 2, 2))(x)
                 # x2 = Flatten()(x)
 
-                # fms = 8 # or more if no improve
+
                 input1 = Input(shape=(13, 13, 13, 1), name="inputs")
 
                 params = dict(kernel_size=(5, 5, 5), activation=None,
-                              padding="same", kernel_initializer="he_uniform")
+                              padding="same", kernel_initializer=kernel_initializer)
 
                 # Transposed convolution parameters
-                #params_trans = dict(kernel_size=(2, 2, 2), strides=(1, 1, 1), padding="same")
+                # params_trans = dict(kernel_size=(2, 2, 2), strides=(1, 1, 1), padding="same")
 
                 # BEGIN - Encoding path
                 # encodeA = ConvolutionBlock(input1, "encodeA", fms, params)
 
+                # First Encoder
                 name = "encodeA"
-                x = Conv3D(filters=8, **params, name=name + "_conv0")(input1)
+                x = Conv3D(filters=8, **params, name=name + "_conv0")(input1) # ** to use a dictionary instead of keyword in the function
                 x = BatchNormalization(name=name + "_bn0")(x)
                 x = Dropout(.20)(x)
                 x = Activation("relu", name=name + "_relu0")(x)
@@ -291,6 +268,7 @@ for UseIMage in lst_useImage:
                 # encodeA = Activation("relu", name=name)(x)
                 poolA = MaxPooling3D(name="poolA", pool_size=(2, 2, 2))(x)
 
+                # Second Encoder
                 name = "encodeB"
                 x = Conv3D(filters=16, **params, name=name + "_conv0")(poolA)
                 x = BatchNormalization(name=name + "_bn0")(x)
@@ -300,8 +278,8 @@ for UseIMage in lst_useImage:
                 # x = BatchNormalization(name=name + "_bn1")(x)
                 # encodeB = Activation("relu", name=name)(x)
                 poolB = MaxPooling3D(name="poolB", pool_size=(2, 2, 2))(x)
-                #
 
+                # Third Encoder
                 name = "encodeC"
                 x = Conv3D(filters=16, **params, name=name + "_conv0")(poolB)
                 x = BatchNormalization(name=name + "_bn0")(x)
@@ -310,7 +288,8 @@ for UseIMage in lst_useImage:
                 # # x = BatchNormalization(name=name + "_bn1")(x)
                 # # encodeC = Activation("relu", name=name)(x)
                 # poolC = MaxPooling3D(name="poolC", pool_size=(2, 2, 2))(x)
-                # #
+
+                # # Fourth Encoder
                 # name = "encodeD"
                 # x = Conv3D(filters=32, **params, name=name + "_conv0")(poolC)
                 # x = BatchNormalization(name=name + "_bn0")(x)
@@ -321,34 +300,33 @@ for UseIMage in lst_useImage:
                 x2 = Flatten()(x) #was PoolA
             else:
                 # # Relu
-                input1 = keras.layers.Input(shape=(XIMs_train.shape[1],))
+                input1 = keras.layers.Input(shape=(IMTrain.shape[1],))
                 # ,kernel_regularizer=keras.regularizers.l2(l=0.2)
-                x1 = keras.layers.Dense(32, input_dim=XIMs_train.shape[1], activation='relu')(input1)
-                x2 = keras.layers.Dense(16, input_dim=XIMs_train.shape[1], activation='relu')(x1)
+                x1 = keras.layers.Dense(32, input_dim=IMTrain.shape[1], activation='relu')(input1)
+                x2 = keras.layers.Dense(16, input_dim=IMTrain.shape[1], activation='relu')(x1)
 
-
-            # Relu
-            input3 = keras.layers.Input(shape=(XFeature_train.shape[1],))
-            xxx0 = keras.layers.Dense(32, input_dim=XFeature_train.shape[1], activation='relu')(input3)
-            xxx1 = keras.layers.Dense(16, input_dim=XFeature_train.shape[1], activation='relu')(xxx0)
+            # Second Tower
+            input3 = keras.layers.Input(shape=(FeatureTrain.shape[1],))
+            xxx0 = keras.layers.Dense(32, input_dim=FeatureTrain.shape[1], activation='relu')(input3)
+            xxx1 = keras.layers.Dense(16, input_dim=FeatureTrain.shape[1], activation='relu')(xxx0)
             # xxx2 = keras.layers.Dense(8, input_dim=XFeature_train.shape[1], activation='relu')(xxx1)
             # xxx2 = keras.layers.Dense(16, activation='relu')(xxx1)
             # xxx3 = keras.layers.Dense(8, activation='relu')(xxx2)
 
+            # Combine Towers
             combined = keras.layers.concatenate([x2, xxx1])
-
             # Relu
             out = keras.layers.Dense(4, activation='sigmoid')(combined)
             # Leaky Relu
             # out = keras.layers.Dense(4)(added)
             # out = keras.layers.LeakyReLU(alpha=0.05)(out)
 
-
             out1 = keras.layers.Dense(1, activation='sigmoid')(out)
             model = keras.models.Model(inputs=[input1, input3], outputs=out1)
 
-
+            # Customized Loss functions
             import keras.backend as K
+
             def keras_loss_1(y_actual, y_predicted):
                 loss_value = K.mean(K.sum(K.square((y_actual-y_predicted)/0.5)))
                 return loss_value
@@ -358,15 +336,14 @@ for UseIMage in lst_useImage:
                 second_log = K.log(K.clip(y_true, K.epsilon(), None) + 1.)
                 return K.mean(K.square(first_log - second_log), axis=-1)
 
-
+            # Compile model
             optimizer = keras.optimizers.Adam(lr=learning_Rate)
             model.compile(loss='binary_crossentropy',
                           optimizer=optimizer,
                           metrics=['accuracy'],
-
                           )
 
-
+            # Tensor board Data
             tensorboard = TensorBoard(log_dir="E:/AutomatedTracing/AutomatedTracing/Python/logs/"+PltNAme)
             # tensorboard --logdir=E:\AutomatedTracing\AutomatedTracing\Python\logs
             # python -m tensorboard.main --logdir = E:\AutomatedTracing\AutomatedTracing\Python\logs
@@ -393,41 +370,39 @@ for UseIMage in lst_useImage:
             # checkpoint_AUC = ModelCheckpoint(filepath, monitor=keras.metrics.AUC(), verbose=1, save_best_only=True,
             #                                       mode='max')
 
-            # fit(x=None, y=None, batch_size=None, epochs=1, verbose=1, callbacks=None, validation_split=0.0, validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None, validation_freq=1, max_queue_size=10, workers=1, use_multiprocessing=False)
+            # fit(x=None, y=None, batch_size=None, epochs=1, verbose=1, callbacks=None, validation_split=0.0,
+            # validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0,
+            # steps_per_epoch=None, validation_steps=None, validation_freq=1, max_queue_size=10, workers=1,
+            # use_multiprocessing=False)
             if UseConv:
-                X_IMs = IMsTrain3D.reshape(IMsTrain3D.shape[0], IMsTrain3D.shape[1], IMsTrain3D.shape[2], IMsTrain3D.shape[3],
-                                   1)
+                X_IMs = IMsTrain3D.reshape(IMsTrain3D.shape[0], IMsTrain3D.shape[1],
+                                           IMsTrain3D.shape[2], IMsTrain3D.shape[3],1)
             else:
-                X_IMs = XIMs_train
+                X_IMs = IMTrain
 
-
-            history = model.fit([X_IMs,XFeature_train],
-                                yIMs_train,
+            # Track Training History
+            history = model.fit([X_IMs,FeatureTrain],
+                                LabelsTrain,
                                 epochs=epoch,
                                 batch_size=batch_size,
                                 validation_split=0.30,
                                 verbose=1
-                                ,callbacks=[checkpoint_max_val_acc,checkpoint_min_val_acc,checkpoint_max_val_loss,checkpoint_min_val_loss,tensorboard],
+                                ,callbacks=[checkpoint_max_val_acc,checkpoint_min_val_acc,checkpoint_max_val_loss,checkpoint_min_val_loss,tensorboard,lrate],
                                 )
 
-            #######                Save Model
+            # Save Model
             model.save(root_dir + '/data/models/'+ PltNAme+'.h5')
 
-# PltNAme = 're2_com_LR=0.001_lim100sc_AlDat_augm_loc_Init_he_uniform_Tmp_IM=1batchSize=10_XYZ=False_Use_IMage=True_Use_EndpointFeatures=True_Epoch=150_run=5'
+# PltNAme = 're2_com_LR=0.001_lim100sc_AlDat_augm_loc_Init_he_uniform_Tmp_
+# IM=1batchSize=10_XYZ=False_Use_IMage=True_Use_EndpointFeatures=True_Epoch=150_run=5'
 # model = load_model('DataFiles/'+PltNAme+'.h5')
 
-
-
+            # Model Summary
             print(model.summary())
             from keras.utils.vis_utils import plot_model
             pltName = root_dir + '/data/models/'+PltNAme+'.png'
             print(pltName)
             plot_model(model, to_file=pltName, show_shapes=True, show_layer_names=True)
-
-
-## Add Acc and Save with file
-
-
 
             # # Plot training & validation accuracy values
             plt.figure()

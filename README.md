@@ -11,7 +11,12 @@ Our understanding of synaptic connectivity in the brain relies on the ability to
 Traces of neurons obtained from 3D optical microscopy stacks of images unavoidably contain topological errors such as broken branches, which result from the non-uniform intensity of neurites, and fused branches, which arise from branch proximity and a relatively low resolution of light microscopy. 
 </br></br>
 <img src="https://web.northeastern.edu/kahaki/GithubImage0.png" alt="Registrar" align="middle" width="60%" height="60%"> 
- 
+
+## Project Page
+[Trace Proofreading](https://web.northeastern.edu/kahaki/traceproofreading.html)
+
+
+
 ## Contact
 Seyed Mostafa Mousavi Kahaki: mousavikahaki@gmail.com
 </br>
